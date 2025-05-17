@@ -8,8 +8,7 @@
     <fragment
         android:id="@+id/FirstFragment"
         android:name="uk.ac.hope.mcse.android.coursework.FirstFragment"
-        android:label="@string/first_fragment_label"
-        tools:layout="@layout/fragment_first">
+        android:label="@string/first_fragment_label" tools:layout="@layout/fragment_first">
 
         <action
             android:id="@+id/action_FirstFragment_to_SecondFragment"
@@ -18,8 +17,7 @@
     <fragment
         android:id="@+id/SecondFragment"
         android:name="uk.ac.hope.mcse.android.coursework.SecondFragment"
-        android:label="@string/second_fragment_label"
-        tools:layout="@layout/fragment_second">
+        android:label="@string/second_fragment_label" tools:layout="@layout/fragment_second">
 
         <action
             android:id="@+id/action_SecondFragment_to_FirstFragment"
