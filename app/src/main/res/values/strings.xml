@@ -24,4 +24,6 @@
     <string name="cancel_delete">Cancel</string>
     <string name="entry_deleted_toast">Entry deleted</string>
     <string name="no_entries_icon_description">Icon indicating no journal entries</string>
+
+    <string name="action_toggle_theme">Toggle Theme</string>
 </resources>

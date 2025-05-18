@@ -1,23 +1,24 @@
 package uk.ac.hope.mcse.android.coursework;
 
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 import uk.ac.hope.mcse.android.coursework.databinding.ActivityMainBinding;
-import android.widget.Toast;
-
 
 public class MainActivity extends AppCompatActivity {
 
     private AppBarConfiguration appBarConfiguration;
-    private ActivityMainBinding binding; // ViewBinding instance
-
+    private ActivityMainBinding binding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,14 +29,8 @@ public class MainActivity extends AppCompatActivity {
 
         setSupportActionBar(binding.toolbar);
 
-        // Finds the NavController from NavHostFragment
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
-
-        // This defines top-level destinations. The Up button will not be shown for these.
-        appBarConfiguration = new AppBarConfiguration.Builder(R.id.FirstFragment)
-                .build();
-
-        // This connects the NavController to the ActionBar.
+        appBarConfiguration = new AppBarConfiguration.Builder(R.id.FirstFragment).build();
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
 
         if (binding.fab != null) {
@@ -43,11 +38,8 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View view) {
                     NavController currentNavController = Navigation.findNavController(MainActivity.this, R.id.nav_host_fragment_content_main);
-
                     if (currentNavController.getCurrentDestination() != null &&
                             currentNavController.getCurrentDestination().getId() == R.id.FirstFragment) {
-
-
                         currentNavController.navigate(R.id.action_FirstFragment_to_SecondFragment);
                     }
                 }
@@ -71,10 +63,26 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            Toast.makeText(this, "Settings clicked (Not implemented)", Toast.LENGTH_SHORT).show();
+
+        if (id == R.id.action_toggle_theme) {
+            // Gets current night mode state
+            int currentNightMode = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+            switch (currentNightMode) {
+                case Configuration.UI_MODE_NIGHT_NO:
+                    // Current is light theme, switch to dark theme
+                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+                    break;
+                case Configuration.UI_MODE_NIGHT_YES:
+                    // Current is dark theme, switch to light theme
+                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+                    break;
+                default:
+                    break;
+            }
+
             return true;
         }
+
         return super.onOptionsItemSelected(item);
     }
 }
