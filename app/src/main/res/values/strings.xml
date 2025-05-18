@@ -26,4 +26,5 @@
     <string name="no_entries_icon_description">Icon indicating no journal entries</string>
 
     <string name="action_toggle_theme">Toggle Theme</string>
+    <string name="delete_confirmation_message_format">Are you sure you want to delete \"%1$s\"?</string>
 </resources>

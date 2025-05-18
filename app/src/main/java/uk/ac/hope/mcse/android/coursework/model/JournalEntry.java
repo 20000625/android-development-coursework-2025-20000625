@@ -25,13 +25,16 @@ public class JournalEntry {
     @ColumnInfo(name = "entry_date_millis")
     private long entryDateMillis;
 
+    private Double latitude;
+    private Double longitude;
+
     // Room needs a public constructor (or one it can access).
     public JournalEntry(String title, String content, long entryDateMillis) {
-        // For new entries before they are inserted, ID will be 0.
-        // After insertion, Room will assign the auto-generated ID.
         this.title = title;
         this.content = content;
         this.entryDateMillis = entryDateMillis;
+        this.latitude = null; // Initialises to null
+        this.longitude = null; // Initialises to null
     }
 
     // Getters and Setters (Room needs these or public fields)
@@ -61,6 +64,23 @@ public class JournalEntry {
 
     public long getEntryDateMillis() {
         return entryDateMillis;
+    }
+
+    // Adds getters and setters for latitude and longitude
+    public Double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(Double latitude) {
+        this.latitude = latitude;
+    }
+
+    public Double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(Double longitude) {
+        this.longitude = longitude;
     }
 
     public void setEntryDateMillis(long entryDateMillis) {
