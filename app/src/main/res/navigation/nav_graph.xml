@@ -8,23 +8,22 @@
     <fragment
         android:id="@+id/FirstFragment"
         android:name="uk.ac.hope.mcse.android.coursework.FirstFragment"
-        android:label="@string/first_fragment_label" tools:layout="@layout/fragment_first">
+        android:label="@string/first_fragment_label"
+        tools:layout="@layout/fragment_first">
 
         <action
-            android:id="@+id/action_FirstFragment_to_SecondFragment"
-            app:destination="@id/SecondFragment" />
+            android:id="@+id/action_FirstFragment_to_SecondFragment" app:destination="@id/SecondFragment" />
     </fragment>
     <fragment
         android:id="@+id/SecondFragment"
         android:name="uk.ac.hope.mcse.android.coursework.SecondFragment"
-        android:label="@string/second_fragment_label" tools:layout="@layout/fragment_second">
-
-        <action
-            android:id="@+id/action_SecondFragment_to_FirstFragment"
-            app:destination="@id/FirstFragment" />
+        android:label="@string/second_fragment_label"
+        tools:layout="@layout/fragment_second">
         <argument
             android:name="journalEntryId"
             app:argType="long"
-            android:defaultValue="-1L" />
+            android:defaultValue="-1L" /> <action
+        android:id="@+id/action_SecondFragment_to_FirstFragment"
+        app:destination="@id/FirstFragment" />
     </fragment>
 </navigation>

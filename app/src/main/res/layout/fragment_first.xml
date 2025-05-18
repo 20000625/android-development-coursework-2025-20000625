@@ -10,20 +10,44 @@
         android:id="@+id/recyclerview_journal_entries"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        tools:listitem="@layout/list_item_journal_entry" /> <TextView
-    android:id="@+id/textview_empty_journal_placeholder"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:text="@string/no_entries_placeholder"
-    android:textAppearance="?attr/textAppearanceBody1"
-    android:visibility="gone" app:layout_constraintTop_toTopOf="parent"
-    app:layout_constraintBottom_toBottomOf="parent"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintEnd_toEndOf="parent"
-    tools:visibility="visible"/>
+        tools:listitem="@layout/list_item_journal_entry" />
+
+    <androidx.constraintlayout.widget.Group
+        android:id="@+id/group_empty_state"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:constraint_referenced_ids="imageview_empty_icon,textview_empty_journal_placeholder"
+        tools:visibility="visible" />
+
+    <ImageView
+        android:id="@+id/imageview_empty_icon"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:layout_marginBottom="8dp"
+        app:srcCompat="@android:drawable/ic_menu_agenda"
+        android:contentDescription="No entries icon"
+        app:layout_constraintBottom_toTopOf="@+id/textview_empty_journal_placeholder"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_chainStyle="packed" />
+
+    <TextView
+        android:id="@+id/textview_empty_journal_placeholder"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/no_entries_placeholder"
+        android:textAppearance="?attr/textAppearanceBody1"
+        android:gravity="center"
+        app:layout_constraintTop_toBottomOf="@+id/imageview_empty_icon"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
