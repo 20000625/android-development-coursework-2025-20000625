@@ -9,21 +9,24 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider; // Imports ViewModelProvider
 import androidx.navigation.fragment.NavHostFragment;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.Locale;
 
 import uk.ac.hope.mcse.android.coursework.databinding.FragmentSecondBinding;
-// TODO: Later, import your JournalEntry model and ViewModel
+import uk.ac.hope.mcse.android.coursework.model.JournalEntry; // Imports the model
+import uk.ac.hope.mcse.android.coursework.vm.JournalViewModel; // Imports the ViewModel
 
 public class SecondFragment extends Fragment {
 
     private FragmentSecondBinding binding;
-    private Calendar selectedDateCalendar = Calendar.getInstance(); // To store the selected date
+    private Calendar selectedDateCalendar = Calendar.getInstance();
+    private JournalViewModel journalViewModel; // Declares ViewModel
 
     @Override
     public View onCreateView(
@@ -34,39 +37,46 @@ public class SecondFragment extends Fragment {
         return binding.getRoot();
     }
 
-    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        updateDateDisplay(); // Display current date initially
+        // Initialises ViewModel - scope it to the Activity to share with FirstFragment
+        journalViewModel = new ViewModelProvider(requireActivity()).get(JournalViewModel.class);
 
+        updateDateDisplay();
         binding.buttonChangeDate.setOnClickListener(v -> showDatePickerDialog());
 
         binding.buttonSaveEntry.setOnClickListener(v -> {
             String title = binding.edittextEntryTitle.getText().toString().trim();
             String content = binding.edittextEntryContent.getText().toString().trim();
 
+            boolean isValid = true;
             if (title.isEmpty()) {
-                binding.textInputLayoutTitle.setError("Title cannot be empty");
-                return;
+                binding.textInputLayoutTitle.setError(getString(R.string.error_title_empty));
+                isValid = false;
             } else {
-                binding.textInputLayoutTitle.setError(null); // Clear error
+                binding.textInputLayoutTitle.setError(null);
             }
 
             if (content.isEmpty()) {
-                binding.textInputLayoutContent.setError("Content cannot be empty");
-                return;
+                binding.textInputLayoutContent.setError(getString(R.string.error_content_empty));
+                isValid = false;
             } else {
-                binding.textInputLayoutContent.setError(null); // Clear error
+                binding.textInputLayoutContent.setError(null);
             }
 
-            // TODO: Create JournalEntry object
+            if (isValid) {
+                // Creates a new JournalEntry object
+                JournalEntry newEntry = new JournalEntry(title, content, selectedDateCalendar.getTimeInMillis());
 
-            // TODO: Pass this entry to ViewModel to save it
-            Toast.makeText(getContext(), "Entry '" + title + "' would be saved for " + binding.textviewEntryDate.getText(), Toast.LENGTH_LONG).show();
+                // Adds the new entry using the ViewModel
+                journalViewModel.addJournalEntry(newEntry);
 
+                Toast.makeText(getContext(), "Entry '" + title + "' saved!", Toast.LENGTH_SHORT).show();
 
-            // Navigate back to the FirstFragment
-            NavHostFragment.findNavController(SecondFragment.this).navigateUp();
+                NavHostFragment.findNavController(SecondFragment.this).navigateUp();
+            }
         });
     }
 
@@ -78,7 +88,7 @@ public class SecondFragment extends Fragment {
             updateDateDisplay();
         };
 
-        new DatePickerDialog(getContext(), dateSetListener,
+        new DatePickerDialog(requireContext(), dateSetListener,
                 selectedDateCalendar.get(Calendar.YEAR),
                 selectedDateCalendar.get(Calendar.MONTH),
                 selectedDateCalendar.get(Calendar.DAY_OF_MONTH))
@@ -86,7 +96,7 @@ public class SecondFragment extends Fragment {
     }
 
     private void updateDateDisplay() {
-        SimpleDateFormat sdf = new SimpleDateFormat("EEE, dd MMM yyyy", Locale.getDefault());
+        SimpleDateFormat sdf = new SimpleDateFormat("EEE, dd MMM yy", Locale.getDefault());
         binding.textviewEntryDate.setText(sdf.format(selectedDateCalendar.getTime()));
     }
 

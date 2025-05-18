@@ -31,13 +31,13 @@ public class MainActivity extends AppCompatActivity {
         appBarConfiguration = new AppBarConfiguration.Builder(navController.getGraph()).build();
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
 
-        // Set content description for accessibility
+        // Sets content description for accessibility
         binding.fab.setContentDescription(getString(R.string.fab_add_entry_description));
 
         binding.fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                // Ensure NavController is available
+                // Ensures NavController is available
                 NavController currentNavController = Navigation.findNavController(MainActivity.this, R.id.nav_host_fragment_content_main);
                 if (currentNavController.getCurrentDestination() != null &&
                         currentNavController.getCurrentDestination().getId() == R.id.FirstFragment) {

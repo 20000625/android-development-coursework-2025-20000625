@@ -9,17 +9,22 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.LinearLayoutManager; // Needed for RecyclerView
+import androidx.lifecycle.ViewModelProvider; // Imports ViewModelProvider
+import androidx.recyclerview.widget.LinearLayoutManager;
 
-// TODO (Later): Import NavHostFragment, your JournalEntry model, JournalEntryAdapter, and ViewModel
+import java.util.ArrayList; // For initializing adapter with an empty list
+import java.util.List; // Imports the List
 
 import uk.ac.hope.mcse.android.coursework.databinding.FragmentFirstBinding;
+import uk.ac.hope.mcse.android.coursework.model.JournalEntry; // Imports the model
+import uk.ac.hope.mcse.android.coursework.ui.JournalEntryAdapter; // Imports the adapter
+import uk.ac.hope.mcse.android.coursework.vm.JournalViewModel; // Imports the ViewModel
 
 public class FirstFragment extends Fragment {
 
     private FragmentFirstBinding binding;
-    // TODO (Later): Declare your JournalEntryAdapter and ViewModel here
-
+    private JournalEntryAdapter journalAdapter;
+    private JournalViewModel journalViewModel;
 
     @Override
     public View onCreateView(
@@ -34,18 +39,28 @@ public class FirstFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        // Initialises ViewModel - scope it to the Activity to share with SecondFragment
+        journalViewModel = new ViewModelProvider(requireActivity()).get(JournalViewModel.class);
+
         // Setup RecyclerView
         binding.recyclerviewJournalEntries.setLayoutManager(new LinearLayoutManager(getContext()));
-        // TODO (Later): Initialize your adapter:
 
-        // TODO (Later): Initialize ViewModel:
+        // Initialises Adapter with an empty list initially and set item click listener (TODO later)
+        journalAdapter = new JournalEntryAdapter(new ArrayList<>() /*, entry -> {
+            // TODO: Handle item click: Navigate to SecondFragment with entry data for viewing/editing
 
-        // TODO (Later): Observe LiveData from ViewModel to update the adapter and empty view:
+        } */);
+        binding.recyclerviewJournalEntries.setAdapter(journalAdapter);
 
-        updateEmptyViewVisibility(true);
+        // Observes LiveData from ViewModel
+        journalViewModel.getAllEntries().observe(getViewLifecycleOwner(), entries -> {
+            // Updates the adapter's data
+            journalAdapter.setEntries(entries);
+            // Updates visibility of the empty placeholder
+            updateEmptyViewVisibility(entries == null || entries.isEmpty());
+        });
     }
 
-    // Helper method to show/hide the empty placeholder TextView
     private void updateEmptyViewVisibility(boolean isEmpty) {
         if (isEmpty) {
             binding.recyclerviewJournalEntries.setVisibility(View.GONE);
@@ -59,6 +74,6 @@ public class FirstFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        binding = null; // Important for ViewBinding in Fragments
+        binding = null;
     }
 }
