@@ -9,19 +9,18 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.Observer; // Ensure this import is present
+import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView; // Ensure this import is present
 
 import java.util.ArrayList;
 import java.util.List;
 
 import uk.ac.hope.mcse.android.coursework.databinding.FragmentFirstBinding;
-import uk.ac.hope.mcse.android.coursework.model.JournalEntry; // Your model
-import uk.ac.hope.mcse.android.coursework.ui.JournalEntryAdapter; // Your adapter
-import uk.ac.hope.mcse.android.coursework.vm.JournalViewModel; // Your ViewModel
+import uk.ac.hope.mcse.android.coursework.model.JournalEntry;
+import uk.ac.hope.mcse.android.coursework.ui.JournalEntryAdapter;
+import uk.ac.hope.mcse.android.coursework.vm.JournalViewModel;
 
 public class FirstFragment extends Fragment {
 

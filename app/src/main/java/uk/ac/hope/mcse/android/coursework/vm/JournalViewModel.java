@@ -2,11 +2,12 @@
 package uk.ac.hope.mcse.android.coursework.vm;
 
 import android.app.Application;
+
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
-// MutableLiveData is no longer directly managed here for the main list, as LiveData comes from the Repository/DAO.
 
 import java.util.List;
+
 import uk.ac.hope.mcse.android.coursework.model.JournalEntry;
 import uk.ac.hope.mcse.android.coursework.repository.JournalRepository;
 
