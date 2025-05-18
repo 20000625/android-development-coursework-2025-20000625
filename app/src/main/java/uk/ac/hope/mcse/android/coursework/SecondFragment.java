@@ -3,7 +3,9 @@ package uk.ac.hope.mcse.android.coursework;
 import android.Manifest;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -64,7 +66,6 @@ public class SecondFragment extends Fragment {
 
         journalViewModel = new ViewModelProvider(requireActivity()).get(JournalViewModel.class);
 
-        // Retrieves the entry ID passed from FirstFragment
         if (getArguments() != null) {
             currentEntryId = SecondFragmentArgs.fromBundle(getArguments()).getJournalEntryId();
         }
@@ -76,20 +77,23 @@ public class SecondFragment extends Fragment {
             if (Boolean.TRUE.equals(fineLocationGranted) || Boolean.TRUE.equals(coarseLocationGranted)) {
                 fetchLocation();
             } else {
-                Toast.makeText(getContext(), "Location permission denied", Toast.LENGTH_SHORT).show();
-                binding.textviewLocationStatus.setText(R.string.location_permission_denied); // Use string resource
+                Toast.makeText(getContext(), R.string.location_permission_denied, Toast.LENGTH_SHORT).show();
+                updateLocationDisplayAndInteractivity(); // Update UI to reflect permission denial
             }
         });
 
         if (currentEntryId != -1L) {
-            binding.buttonSaveEntry.setText(getString(R.string.update_entry_button_text));
+            // As per new request, hide save button for existing entries.
+            // This makes existing entries effectively read-only unless another mechanism to enable editing is added.
+            binding.buttonSaveEntry.setVisibility(View.GONE);
             binding.buttonDeleteEntry.setVisibility(View.VISIBLE);
+
             journalViewModel.getEntryById(currentEntryId).observe(getViewLifecycleOwner(), journalEntry -> {
                 if (journalEntry != null) {
                     entryToEdit = journalEntry;
                     populateFieldsForEditing(entryToEdit);
                 } else {
-                    if (currentEntryId != -1L) { // Avoid toast if ID was already -1
+                    if (currentEntryId != -1L) {
                         Toast.makeText(getContext(), "Entry not found or has been deleted.", Toast.LENGTH_LONG).show();
                         NavHostFragment.findNavController(SecondFragment.this).navigateUp();
                     }
@@ -97,44 +101,44 @@ public class SecondFragment extends Fragment {
             });
         } else {
             binding.buttonSaveEntry.setText(getString(R.string.save_entry));
+            binding.buttonSaveEntry.setVisibility(View.VISIBLE); // Ensures save button is visible for new entries
             binding.edittextEntryTitle.setText("");
             binding.edittextEntryContent.setText("");
             selectedDateCalendar = Calendar.getInstance();
             updateDateDisplay();
             binding.buttonDeleteEntry.setVisibility(View.GONE);
-            binding.buttonAddLocation.setVisibility(View.VISIBLE); // Ensures visible for new entries
-            binding.textviewLocationStatus.setText(getString(R.string.no_location_added));
+            entryToEdit = null;
             currentLatitude = null;
             currentLongitude = null;
-            entryToEdit = null;
+            updateLocationDisplayAndInteractivity(); // Sets initial state for location UI
         }
 
         binding.buttonChangeDate.setOnClickListener(v -> showDatePickerDialog());
         binding.buttonSaveEntry.setOnClickListener(v -> saveOrUpdateEntry());
         binding.buttonDeleteEntry.setOnClickListener(v -> confirmDeleteEntry());
         binding.buttonAddLocation.setOnClickListener(v -> requestLocationPermissions());
+
+        // Makes the location status TextView clickable to open map
+        binding.textviewLocationStatus.setOnClickListener(v -> openLocationInMap());
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        // Set the ActionBar title
         if (getActivity() instanceof AppCompatActivity) {
             ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
             if (actionBar != null) {
                 if (currentEntryId != -1L) {
-                    if (entryToEdit != null && entryToEdit.getTitle() != null && !entryToEdit.getTitle().isEmpty()) {
-                        actionBar.setTitle(entryToEdit.getTitle());
-                    } else {
-                        actionBar.setTitle(getString(R.string.title_edit_entry));
-                    }
+                    // Title for existing entries is now the "home screen" title
+                    actionBar.setTitle(getString(R.string.first_fragment_label));
                 } else {
                     actionBar.setTitle(getString(R.string.title_new_entry));
                 }
             }
         }
+        // Ensures location UI is correctly displayed when fragment resumes
+        updateLocationDisplayAndInteractivity();
     }
-
 
     private void populateFieldsForEditing(JournalEntry entry) {
         binding.edittextEntryTitle.setText(entry.getTitle());
@@ -144,13 +148,49 @@ public class SecondFragment extends Fragment {
 
         currentLatitude = entry.getLatitude();
         currentLongitude = entry.getLongitude();
+        updateLocationDisplayAndInteractivity(); // Centralised UI update for location
+    }
+
+    private void updateLocationDisplayAndInteractivity() {
+        if (binding == null) return; // Fragment view is not available
 
         if (currentLatitude != null && currentLongitude != null) {
-            binding.textviewLocationStatus.setText(String.format(Locale.getDefault(), "Location: %.4f, %.4f", currentLatitude, currentLongitude));
-            binding.buttonAddLocation.setVisibility(View.GONE); // Hides if location exists
+            binding.textviewLocationStatus.setText(String.format(Locale.getDefault(), "Location: %.4f, %.4f (Tap to view)", currentLatitude, currentLongitude));
+            binding.textviewLocationStatus.setClickable(true);
+
+            binding.buttonAddLocation.setVisibility(View.GONE);
         } else {
-            binding.textviewLocationStatus.setText(getString(R.string.no_location_added));
-            binding.buttonAddLocation.setVisibility(View.VISIBLE); // Shows if no location
+            // Checks if permission was denied to show appropriate message
+            if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                    ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
+                binding.textviewLocationStatus.setText(getString(R.string.no_location_added));
+            } else {
+                binding.textviewLocationStatus.setText(getString(R.string.no_location_added));
+            }
+            binding.textviewLocationStatus.setClickable(false);
+            binding.buttonAddLocation.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void openLocationInMap() {
+        if (currentLatitude != null && currentLongitude != null) {
+            String label = (entryToEdit != null && entryToEdit.getTitle() != null && !entryToEdit.getTitle().isEmpty())
+                    ? entryToEdit.getTitle()
+                    : "Journal Entry Location";
+            String uriString = String.format(Locale.ENGLISH, "geo:%f,%f?q=%f,%f(%s)",
+                    currentLatitude, currentLongitude, currentLatitude, currentLongitude, Uri.encode(label));
+            Uri gmmIntentUri = Uri.parse(uriString);
+
+            Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
+
+            if (mapIntent.resolveActivity(requireActivity().getPackageManager()) != null) {
+                startActivity(mapIntent);
+            } else {
+                Toast.makeText(getContext(), "No map application found.", Toast.LENGTH_LONG).show();
+            }
+        } else {
+            Toast.makeText(getContext(), "No location data to show on map.", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -177,16 +217,15 @@ public class SecondFragment extends Fragment {
             JournalEntry entryToSave;
             String successMessage;
 
-            if (entryToEdit != null && currentEntryId != -1L) { // Editing existing
+            if (entryToEdit != null && currentEntryId != -1L) {
                 entryToSave = entryToEdit;
                 entryToSave.setTitle(title);
                 entryToSave.setContent(content);
                 entryToSave.setEntryDateMillis(selectedDateCalendar.getTimeInMillis());
-                // Only update location if new location data is available from a fresh fetch.
                 entryToSave.setLatitude(currentLatitude);
                 entryToSave.setLongitude(currentLongitude);
                 successMessage = "Entry '" + title + "' updated!";
-            } else { // Creating new
+            } else {
                 entryToSave = new JournalEntry(title, content, selectedDateCalendar.getTimeInMillis());
                 entryToSave.setLatitude(currentLatitude);
                 entryToSave.setLongitude(currentLongitude);
@@ -231,7 +270,7 @@ public class SecondFragment extends Fragment {
     }
 
     private void updateDateDisplay() {
-        SimpleDateFormat sdf = new SimpleDateFormat("EEE, dd MMM yyyy", Locale.getDefault());
+        SimpleDateFormat sdf = new SimpleDateFormat("EEE, dd MMM yy", Locale.getDefault());
         binding.textviewEntryDate.setText(sdf.format(selectedDateCalendar.getTime()));
     }
 
@@ -245,11 +284,11 @@ public class SecondFragment extends Fragment {
     private void fetchLocation() {
         if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            binding.textviewLocationStatus.setText(R.string.location_permission_not_granted); // Use string resource
+            updateLocationDisplayAndInteractivity();
             return;
         }
 
-        binding.textviewLocationStatus.setText(R.string.fetching_location); // Use string resource
+        binding.textviewLocationStatus.setText(R.string.fetching_location);
         fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, new CancellationToken() {
             @NonNull @Override public CancellationToken onCanceledRequested(@NonNull OnTokenCanceledListener onTokenCanceledListener) {
                 return new CancellationTokenSource().getToken();
@@ -259,20 +298,18 @@ public class SecondFragment extends Fragment {
             if (location != null) {
                 currentLatitude = location.getLatitude();
                 currentLongitude = location.getLongitude();
-                binding.textviewLocationStatus.setText(String.format(Locale.getDefault(), "Location: %.4f, %.4f", currentLatitude, currentLongitude));
-                Toast.makeText(getContext(), R.string.location_captured, Toast.LENGTH_SHORT).show(); // Use string resource
-                binding.buttonAddLocation.setVisibility(View.GONE); // Hide button after capturing location
+                Toast.makeText(getContext(), R.string.location_captured, Toast.LENGTH_SHORT).show();
             } else {
-                binding.textviewLocationStatus.setText(R.string.could_not_get_location); // Use string resource
-                Toast.makeText(getContext(), R.string.failed_to_get_location_ensure_services, Toast.LENGTH_LONG).show(); // Use string resource
-                currentLatitude = null;
+                Toast.makeText(getContext(), R.string.could_not_get_location, Toast.LENGTH_LONG).show();
+                currentLatitude = null; // Ensures reset if location fetch fails to return a location
                 currentLongitude = null;
             }
+            updateLocationDisplayAndInteractivity(); // Updates UI after fetch attempt
         }).addOnFailureListener(requireActivity(), e -> {
-            binding.textviewLocationStatus.setText(R.string.error_fetching_location); // Use string resource
-            Toast.makeText(getContext(), getString(R.string.error_getting_location_message, e.getMessage()), Toast.LENGTH_LONG).show(); // Use string resource
+            Toast.makeText(getContext(), getString(R.string.error_getting_location_message, e.getMessage()), Toast.LENGTH_LONG).show();
             currentLatitude = null;
             currentLongitude = null;
+            updateLocationDisplayAndInteractivity(); // Updates UI after failure
         });
     }
 
