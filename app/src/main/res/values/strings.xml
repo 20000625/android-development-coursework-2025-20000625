@@ -1,7 +1,11 @@
 <resources>
-    <string name="app_name">My Journal</string> <string name="action_settings">Settings</string>
+    <string name="app_name">My Journal</string>
+    <string name="action_settings">Settings</string>
 
-    <string name="first_fragment_label">Journal Entries</string> <string name="second_fragment_label">New/Edit Entry</string> <string name="next">Next</string>
+    <string name="first_fragment_label">Journal Entries</string>
+    <string name="second_fragment_label">New/Edit Entry</string>
+
+    <string name="next">Next</string>
     <string name="previous">Previous</string>
 
     <string name="save_entry">Save Entry</string>
@@ -10,5 +14,6 @@
     <string name="label_entry_date">Date:</string>
     <string name="no_entries_placeholder">No journal entries yet. Tap the + button to add one!</string>
     <string name="change_date_button">Change Date</string>
-
-</resources>
+    <string name="error_title_empty">Title cannot be empty</string>
+    <string name="error_content_empty">Content cannot be empty</string>
+    <string name="fab_add_entry_description">Add new journal entry</string> </resources>

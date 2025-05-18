@@ -47,7 +47,6 @@ public class SecondFragment extends Fragment {
 
             if (title.isEmpty()) {
                 binding.textInputLayoutTitle.setError("Title cannot be empty");
-                // Or use Toast: Toast.makeText(getContext(), "Title cannot be empty", Toast.LENGTH_SHORT).show();
                 return;
             } else {
                 binding.textInputLayoutTitle.setError(null); // Clear error
@@ -55,14 +54,12 @@ public class SecondFragment extends Fragment {
 
             if (content.isEmpty()) {
                 binding.textInputLayoutContent.setError("Content cannot be empty");
-                // Or use Toast: Toast.makeText(getContext(), "Content cannot be empty", Toast.LENGTH_SHORT).show();
                 return;
             } else {
                 binding.textInputLayoutContent.setError(null); // Clear error
             }
 
             // TODO: Create JournalEntry object
-            // JournalEntry newEntry = new JournalEntry(title, content, selectedDateCalendar.getTimeInMillis());
 
             // TODO: Pass this entry to ViewModel to save it
             Toast.makeText(getContext(), "Entry '" + title + "' would be saved for " + binding.textviewEntryDate.getText(), Toast.LENGTH_LONG).show();

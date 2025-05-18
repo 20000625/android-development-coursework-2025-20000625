@@ -7,16 +7,19 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.LinearLayoutManager;
-// TODO: Later, import NavHostFragment, your JournalEntry model, adapter, and ViewModel
+import androidx.recyclerview.widget.LinearLayoutManager; // Needed for RecyclerView
+
+// TODO (Later): Import NavHostFragment, your JournalEntry model, JournalEntryAdapter, and ViewModel
 
 import uk.ac.hope.mcse.android.coursework.databinding.FragmentFirstBinding;
 
 public class FirstFragment extends Fragment {
 
     private FragmentFirstBinding binding;
-    // TODO: Declare your JournalEntryAdapter and ViewModel here
+    // TODO (Later): Declare your JournalEntryAdapter and ViewModel here
+
 
     @Override
     public View onCreateView(
@@ -27,21 +30,22 @@ public class FirstFragment extends Fragment {
         return binding.getRoot();
     }
 
-    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
         // Setup RecyclerView
         binding.recyclerviewJournalEntries.setLayoutManager(new LinearLayoutManager(getContext()));
-        // TODO: Initialize your adapter: journalAdapter = new JournalEntryAdapter(...);
-        // TODO: Set adapter to RecyclerView: binding.recyclerviewJournalEntries.setAdapter(journalAdapter);
+        // TODO (Later): Initialize your adapter:
 
-        // TODO: Initialize ViewModel
-        // TODO: Observe LiveData from ViewModel and update adapter
-        // For now, let's just show/hide the empty placeholder
-        updateEmptyViewVisibility(true); // Assume empty initially
+        // TODO (Later): Initialize ViewModel:
+
+        // TODO (Later): Observe LiveData from ViewModel to update the adapter and empty view:
+
+        updateEmptyViewVisibility(true);
     }
 
-    // TODO: Call this method when the list data changes
+    // Helper method to show/hide the empty placeholder TextView
     private void updateEmptyViewVisibility(boolean isEmpty) {
         if (isEmpty) {
             binding.recyclerviewJournalEntries.setVisibility(View.GONE);
@@ -52,10 +56,9 @@ public class FirstFragment extends Fragment {
         }
     }
 
-
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        binding = null;
+        binding = null; // Important for ViewBinding in Fragments
     }
 }

@@ -1,20 +1,15 @@
+// Path: app/src/main/java/uk/ac/hope/mcse/android/coursework/MainActivity.java
 package uk.ac.hope.mcse.android.coursework;
 
 import android.os.Bundle;
-
-import com.google.android.material.snackbar.Snackbar;
-
+import com.google.android.material.snackbar.Snackbar; // Keep for optional messages
 import androidx.appcompat.app.AppCompatActivity;
-
-import android.view.View;
-
+import android.view.View; // Keep for View.OnClickListener
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
-
 import uk.ac.hope.mcse.android.coursework.databinding.ActivityMainBinding;
-
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -36,35 +31,37 @@ public class MainActivity extends AppCompatActivity {
         appBarConfiguration = new AppBarConfiguration.Builder(navController.getGraph()).build();
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
 
+        // Set content description for accessibility
+        binding.fab.setContentDescription(getString(R.string.fab_add_entry_description));
+
         binding.fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAnchorView(R.id.fab)
-                        .setAction("Action", null).show();
+                // Ensure NavController is available
+                NavController currentNavController = Navigation.findNavController(MainActivity.this, R.id.nav_host_fragment_content_main);
+                if (currentNavController.getCurrentDestination() != null &&
+                        currentNavController.getCurrentDestination().getId() == R.id.FirstFragment) {
+                    currentNavController.navigate(R.id.action_FirstFragment_to_SecondFragment);
+                } else {
+
+                }
             }
         });
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            // TODO: Implement settings screen or action
             return true;
         }
-        // empty
         return super.onOptionsItemSelected(item);
     }
 

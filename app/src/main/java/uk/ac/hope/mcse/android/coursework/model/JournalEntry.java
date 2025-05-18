@@ -12,7 +12,7 @@ public class JournalEntry {
     private long id;
     private String title;
     private String content;
-    private long entryDateMillis; // Store date as milliseconds for easy sorting/storage
+    private long entryDateMillis; // Stores date as milliseconds for easy sorting/storage
 
     // Constructor for new entries
     public JournalEntry(String title, String content, long entryDateMillis) {
@@ -53,7 +53,6 @@ public class JournalEntry {
         return sdf.format(new Date(entryDateMillis));
     }
 
-    // Optional: For simple display in lists or debugging
     @Override
     public String toString() {
         return title + " (" + getFormattedDate() + ")";
