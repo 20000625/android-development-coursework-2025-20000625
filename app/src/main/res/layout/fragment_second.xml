@@ -17,9 +17,10 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/label_entry_date"
-            android:textAppearance="?attr/textAppearanceListItemSecondary"
+            android:textAppearance="?attr/textAppearanceSubtitle1"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBaseline_toBaselineOf="@+id/button_change_date"/>
 
         <TextView
             android:id="@+id/textview_entry_date"
@@ -27,6 +28,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:textAppearance="?attr/textAppearanceBody1"
+            android:textSize="16sp"
             app:layout_constraintBaseline_toBaselineOf="@+id/textview_date_label"
             app:layout_constraintStart_toEndOf="@+id/textview_date_label"
             app:layout_constraintEnd_toStartOf="@+id/button_change_date"
@@ -37,16 +39,18 @@
             style="?attr/materialButtonOutlinedStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:minHeight="48dp"
             android:text="@string/change_date_button"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBaseline_toBaselineOf="@+id/textview_entry_date"/>
+            app:layout_constraintTop_toTopOf="parent" />
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/text_input_layout_title"
+            style="?attr/textInputFilledStyle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
+            android:hint="@string/hint_entry_title"
             app:layout_constraintTop_toBottomOf="@+id/button_change_date"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
@@ -55,39 +59,66 @@
                 android:id="@+id/edittext_entry_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="@string/hint_entry_title"
-                android:inputType="textCapSentences" />
+                android:inputType="textCapSentences"
+                android:maxLines="1" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/text_input_layout_content"
+            style="?attr/textInputFilledStyle"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:layout_marginTop="8dp"
+            android:layout_marginBottom="16dp"
+            android:hint="@string/hint_entry_content"
             app:layout_constraintTop_toBottomOf="@+id/text_input_layout_title"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintBottom_toTopOf="@+id/button_save_entry"
-            android:layout_marginBottom="16dp">
+            app:layout_constraintBottom_toTopOf="@+id/button_save_entry">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/edittext_entry_content"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:gravity="top"
-                android:hint="@string/hint_entry_content"
                 android:inputType="textMultiLine|textCapSentences"
-                android:minLines="5"/>
+                android:minHeight="120dp" />
         </com.google.android.material.textfield.TextInputLayout>
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guideline_buttons"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_percent="0.5"/>
 
         <Button
             android:id="@+id/button_save_entry"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
             android:text="@string/save_entry"
+            app:icon="@android:drawable/ic_menu_save"
             app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/guideline_buttons" />
+
+        <Button
+            android:id="@+id/button_delete_entry"
+            style="?attr/materialButtonOutlinedStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="@string/delete_entry_button_text"
+            app:icon="@android:drawable/ic_menu_delete"
+            android:textColor="?attr/colorError"
+            app:strokeColor="?attr/colorError"
+            android:visibility="gone"
+            tools:visibility="visible"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/guideline_buttons"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
+            app:layout_constraintTop_toTopOf="@+id/button_save_entry" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.core.widget.NestedScrollView>

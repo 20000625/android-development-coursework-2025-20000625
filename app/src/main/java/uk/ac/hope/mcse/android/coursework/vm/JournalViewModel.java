@@ -16,50 +16,55 @@ public class JournalViewModel extends ViewModel {
 
     public JournalViewModel() {
         entriesList = new ArrayList<>();
-        journalEntriesLiveData = new MutableLiveData<>(new ArrayList<>(entriesList)); // Initialises with a new list copy
-        // addDummyData(); // used for testing
+        journalEntriesLiveData = new MutableLiveData<>(new ArrayList<>(entriesList));
     }
 
     public LiveData<List<JournalEntry>> getAllEntries() {
         return journalEntriesLiveData;
     }
 
-    // Modified to handle both add and update for an in-memory list
     public void saveJournalEntry(JournalEntry entry) {
         if (entry == null) return;
-
         boolean entryExists = false;
         for (int i = 0; i < entriesList.size(); i++) {
             if (entriesList.get(i).getId() == entry.getId()) {
-                entriesList.set(i, entry); // Replaces existing entry (update)
+                entriesList.set(i, entry);
                 entryExists = true;
                 break;
             }
         }
-
         if (!entryExists) {
-            entriesList.add(0, entry); // Adds new entry to the beginning
+            entriesList.add(0, entry);
         }
-
-        // Posts a new list to LiveData to trigger observers
         journalEntriesLiveData.setValue(new ArrayList<>(entriesList));
     }
 
-    // Gets an entry by its ID
     public JournalEntry getEntryById(long entryId) {
         for (JournalEntry entry : entriesList) {
             if (entry.getId() == entryId) {
                 return entry;
             }
         }
-        return null; // Return null if not found
+        return null;
     }
 
-    private void addDummyData() {
-        // Ensures IDs are unique if using this with actual additions
-        long now = System.currentTimeMillis();
-        saveJournalEntry(new JournalEntry("First Day", "This is my first journal entry!", now - (3L * 24 * 60 * 60 * 1000)));
-        saveJournalEntry(new JournalEntry("Android Thoughts", "Learning Android is fun.", now - (1L * 24 * 60 * 60 * 1000)));
-        saveJournalEntry(new JournalEntry("Today's Progress", "Implemented ViewModel and Adapter.", now));
+    // New method to delete a journal entry
+    public void deleteJournalEntry(JournalEntry entryToDelete) {
+        if (entryToDelete == null) return;
+
+        boolean removed = false;
+        for (int i = 0; i < entriesList.size(); i++) {
+            if (entriesList.get(i).getId() == entryToDelete.getId()) {
+                entriesList.remove(i);
+                removed = true;
+                break;
+            }
+        }
+
+        if (removed) {
+            // Posts the updated list to LiveData
+            journalEntriesLiveData.setValue(new ArrayList<>(entriesList));
+        }
     }
+
 }
