@@ -1,70 +1,50 @@
 // Path: app/src/main/java/uk/ac/hope/mcse/android/coursework/vm/JournalViewModel.java
 package uk.ac.hope.mcse.android.coursework.vm;
 
+import android.app.Application;
+import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.ViewModel;
+// MutableLiveData is no longer directly managed here for the main list, as LiveData comes from the Repository/DAO.
 
-import java.util.ArrayList;
 import java.util.List;
 import uk.ac.hope.mcse.android.coursework.model.JournalEntry;
+import uk.ac.hope.mcse.android.coursework.repository.JournalRepository;
 
-public class JournalViewModel extends ViewModel {
+public class JournalViewModel extends AndroidViewModel { // Extends AndroidViewModel
 
-    private final MutableLiveData<List<JournalEntry>> journalEntriesLiveData;
-    private final ArrayList<JournalEntry> entriesList;
+    private JournalRepository repository;
+    private final LiveData<List<JournalEntry>> allEntries;
 
-    public JournalViewModel() {
-        entriesList = new ArrayList<>();
-        journalEntriesLiveData = new MutableLiveData<>(new ArrayList<>(entriesList));
+    public JournalViewModel(Application application) {
+        super(application);
+        repository = new JournalRepository(application);
+        allEntries = repository.getAllEntries();
     }
 
     public LiveData<List<JournalEntry>> getAllEntries() {
-        return journalEntriesLiveData;
+        return allEntries;
     }
 
+    // This is a method to save / insert a new journal entry (calls repository)
     public void saveJournalEntry(JournalEntry entry) {
-        if (entry == null) return;
-        boolean entryExists = false;
-        for (int i = 0; i < entriesList.size(); i++) {
-            if (entriesList.get(i).getId() == entry.getId()) {
-                entriesList.set(i, entry);
-                entryExists = true;
-                break;
-            }
+        // If ID is 0 or not set, it's an insert.
+        // If ID is set (from an existing entry), it's an update.
+        // The DAO's OnConflictStrategy.REPLACE handles this if inserting an existing ID.
+        if (entry.getId() == 0) { // Assuming new entries have ID 0 before DB assigns one
+            repository.insert(entry);
+        } else {
+            repository.update(entry);
         }
-        if (!entryExists) {
-            entriesList.add(0, entry);
-        }
-        journalEntriesLiveData.setValue(new ArrayList<>(entriesList));
     }
 
-    public JournalEntry getEntryById(long entryId) {
-        for (JournalEntry entry : entriesList) {
-            if (entry.getId() == entryId) {
-                return entry;
-            }
-        }
-        return null;
+    // Method to get an entry by its ID (calls repository)
+    // This now returns LiveData<JournalEntry> directly from DAO via Repository
+    public LiveData<JournalEntry> getEntryById(long entryId) {
+        return repository.getEntryById(entryId);
     }
 
-    // New method to delete a journal entry
+    // Method to delete a journal entry (calls repository)
     public void deleteJournalEntry(JournalEntry entryToDelete) {
-        if (entryToDelete == null) return;
-
-        boolean removed = false;
-        for (int i = 0; i < entriesList.size(); i++) {
-            if (entriesList.get(i).getId() == entryToDelete.getId()) {
-                entriesList.remove(i);
-                removed = true;
-                break;
-            }
-        }
-
-        if (removed) {
-            // Posts the updated list to LiveData
-            journalEntriesLiveData.setValue(new ArrayList<>(entriesList));
-        }
+        repository.delete(entryToDelete);
     }
-
 }

@@ -12,8 +12,8 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.fragment.NavHostFragment;
 
@@ -30,8 +30,8 @@ public class SecondFragment extends Fragment {
     private FragmentSecondBinding binding;
     private Calendar selectedDateCalendar = Calendar.getInstance();
     private JournalViewModel journalViewModel;
-    private long currentEntryId = -1L;
-    private JournalEntry entryToEdit = null;
+    private long currentEntryId = -1L; // Stores ID of entry being edited, -1L for new entry
+    private JournalEntry entryToEdit = null; // Stores the full entry object being edited
 
     @Override
     public View onCreateView(
@@ -42,39 +42,48 @@ public class SecondFragment extends Fragment {
         return binding.getRoot();
     }
 
-
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        // Initialises ViewModel (scoped to the Activity)
         journalViewModel = new ViewModelProvider(requireActivity()).get(JournalViewModel.class);
 
+        // Retrieves arguments using the generated Args class
+        // Ensures you have rebuilt the project after adding arguments to nav_graph.xml
         if (getArguments() != null) {
             currentEntryId = SecondFragmentArgs.fromBundle(getArguments()).getJournalEntryId();
         }
 
         if (currentEntryId != -1L) {
-            entryToEdit = journalViewModel.getEntryById(currentEntryId);
-            if (entryToEdit != null) {
-                populateFieldsForEditing(entryToEdit);
-                binding.buttonSaveEntry.setText(getString(R.string.save_entry));
-                binding.buttonDeleteEntry.setVisibility(View.VISIBLE); // Shows delete button
-
-            } else {
-                Toast.makeText(getContext(), "Error: Entry not found.", Toast.LENGTH_LONG).show();
-                NavHostFragment.findNavController(SecondFragment.this).navigateUp();
-                return;
-            }
+            // Observes the LiveData for the specific entry from the ViewModel
+            journalViewModel.getEntryById(currentEntryId).observe(getViewLifecycleOwner(), new Observer<JournalEntry>() {
+                @Override
+                public void onChanged(JournalEntry journalEntry) {
+                    // This check is important because LiveData might emit null initially or if the entry is deleted from another source while being observed.
+                    if (journalEntry != null) {
+                        entryToEdit = journalEntry; // Stores the loaded entry
+                        populateFieldsForEditing(entryToEdit);
+                        binding.buttonSaveEntry.setText(getString(R.string.save_entry));
+                        binding.buttonDeleteEntry.setVisibility(View.VISIBLE); // Shows delete button
+                    } else {
+                        // Entry with given ID not found in the database, or was deleted.
+                        if (currentEntryId != -1L) {
+                            Toast.makeText(getContext(), "Entry not found or has been deleted.", Toast.LENGTH_LONG).show();
+                            NavHostFragment.findNavController(SecondFragment.this).navigateUp(); // Goes back
+                        }
+                    }
+                }
+            });
         } else {
-            // Adding new entry
-            selectedDateCalendar = Calendar.getInstance();
+            selectedDateCalendar = Calendar.getInstance(); // Ensures date is current for new entry
             updateDateDisplay();
-            binding.buttonDeleteEntry.setVisibility(View.GONE); // Hides delete button
+            binding.buttonDeleteEntry.setVisibility(View.GONE); // Hides delete button for new entries
         }
 
         binding.buttonChangeDate.setOnClickListener(v -> showDatePickerDialog());
         binding.buttonSaveEntry.setOnClickListener(v -> saveOrUpdateEntry());
-        binding.buttonDeleteEntry.setOnClickListener(v -> confirmDeleteEntry()); // Sets listener for delete
+        binding.buttonDeleteEntry.setOnClickListener(v -> confirmDeleteEntry());
     }
 
     private void populateFieldsForEditing(JournalEntry entry) {
@@ -93,53 +102,55 @@ public class SecondFragment extends Fragment {
             binding.textInputLayoutTitle.setError(getString(R.string.error_title_empty));
             isValid = false;
         } else {
-            binding.textInputLayoutTitle.setError(null);
+            binding.textInputLayoutTitle.setError(null); // Clears error
         }
+
         if (content.isEmpty()) {
             binding.textInputLayoutContent.setError(getString(R.string.error_content_empty));
             isValid = false;
         } else {
-            binding.textInputLayoutContent.setError(null);
+            binding.textInputLayoutContent.setError(null); // Clears error
         }
 
         if (isValid) {
             JournalEntry entryToSave;
             String successMessage;
 
-            if (entryToEdit != null) {
-                entryToSave = entryToEdit;
+            if (entryToEdit != null && currentEntryId != -1L) { // Checks if a user is in edit mode
+                entryToSave = entryToEdit; // Uses the existing entry object (which has the correct ID)
                 entryToSave.setTitle(title);
                 entryToSave.setContent(content);
                 entryToSave.setEntryDateMillis(selectedDateCalendar.getTimeInMillis());
+                // ViewModel's saveJournalEntry will handle update because ID is set
                 successMessage = "Entry '" + title + "' updated!";
             } else {
+                // Creates a new entry; Room will auto-generate the ID on insert
                 entryToSave = new JournalEntry(title, content, selectedDateCalendar.getTimeInMillis());
                 successMessage = "Entry '" + title + "' saved!";
             }
-            journalViewModel.saveJournalEntry(entryToSave);
+
+            journalViewModel.saveJournalEntry(entryToSave); // Calls ViewModel to save or update
             Toast.makeText(getContext(), successMessage, Toast.LENGTH_SHORT).show();
-            NavHostFragment.findNavController(SecondFragment.this).navigateUp();
+            NavHostFragment.findNavController(SecondFragment.this).navigateUp(); // Goes back to list
         }
     }
 
     private void confirmDeleteEntry() {
-        if (entryToEdit == null) { // This should not happen if delete button is visible
+        if (entryToEdit == null) { // Safety check, delete button should only be visible if entryToEdit is not null
             return;
         }
         new AlertDialog.Builder(requireContext())
                 .setTitle(R.string.delete_confirmation_title)
                 .setMessage(R.string.delete_confirmation_message)
                 .setPositiveButton(R.string.confirm_delete, (dialog, which) -> {
-                    // User clicked "Delete"
                     journalViewModel.deleteJournalEntry(entryToEdit);
                     Toast.makeText(getContext(), R.string.entry_deleted_toast, Toast.LENGTH_SHORT).show();
                     NavHostFragment.findNavController(SecondFragment.this).navigateUp();
                 })
-                .setNegativeButton(R.string.cancel_delete, null) // Does nothing on cancel
+                .setNegativeButton(R.string.cancel_delete, null) // User clicked "Cancel"
                 .setIcon(android.R.drawable.ic_dialog_alert)
                 .show();
     }
-
 
     private void showDatePickerDialog() {
         DatePickerDialog.OnDateSetListener dateSetListener = (datePicker, year, month, dayOfMonth) -> {
@@ -148,6 +159,7 @@ public class SecondFragment extends Fragment {
             selectedDateCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
             updateDateDisplay();
         };
+
         new DatePickerDialog(requireContext(), dateSetListener,
                 selectedDateCalendar.get(Calendar.YEAR),
                 selectedDateCalendar.get(Calendar.MONTH),
@@ -156,7 +168,7 @@ public class SecondFragment extends Fragment {
     }
 
     private void updateDateDisplay() {
-        SimpleDateFormat sdf = new SimpleDateFormat("EEE, dd MMM yyyy", Locale.getDefault());
+        SimpleDateFormat sdf = new SimpleDateFormat("EEE, dd MMM yyyy", Locale.getDefault()); // Corrected yyyy
         binding.textviewEntryDate.setText(sdf.format(selectedDateCalendar.getTime()));
     }
 
