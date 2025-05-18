@@ -27,4 +27,17 @@
 
     <string name="action_toggle_theme">Toggle Theme</string>
     <string name="delete_confirmation_message_format">Are you sure you want to delete \"%1$s\"?</string>
+    <string name="add_current_location">Add Current Location</string>
+    <string name="no_location_added">No location added.</string>
+    <string name="title_new_entry">New Journal Entry</string>
+    <string name="title_edit_entry">Edit Journal Entry</string>
+    <string name="update_entry_button_text">Update Entry</string>
+    <string name="location_permission_denied">Location permission denied.</string>
+    <string name="location_permission_not_granted">Permission not granted to fetch location.</string>
+    <string name="fetching_location">Fetching location…</string>
+    <string name="location_captured">Location captured!</string>
+    <string name="could_not_get_location">Could not get current location. Try again.</string>
+    <string name="failed_to_get_location_ensure_services">Failed to get current location. Ensure location services are enabled.</string>
+    <string name="error_fetching_location">Error fetching location.</string>
+    <string name="error_getting_location_message">Error getting location: %1$s</string>
 </resources>
