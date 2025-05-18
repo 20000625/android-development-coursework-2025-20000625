@@ -11,7 +11,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProvider; // Imports ViewModelProvider
+import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.fragment.NavHostFragment;
 
 import java.text.SimpleDateFormat;
@@ -19,14 +19,16 @@ import java.util.Calendar;
 import java.util.Locale;
 
 import uk.ac.hope.mcse.android.coursework.databinding.FragmentSecondBinding;
-import uk.ac.hope.mcse.android.coursework.model.JournalEntry; // Imports the model
-import uk.ac.hope.mcse.android.coursework.vm.JournalViewModel; // Imports the ViewModel
+import uk.ac.hope.mcse.android.coursework.model.JournalEntry;
+import uk.ac.hope.mcse.android.coursework.vm.JournalViewModel;
 
 public class SecondFragment extends Fragment {
 
     private FragmentSecondBinding binding;
     private Calendar selectedDateCalendar = Calendar.getInstance();
-    private JournalViewModel journalViewModel; // Declares ViewModel
+    private JournalViewModel journalViewModel;
+    private long currentEntryId = -1L; // Stores ID of entry being edited, -1L for new entry
+    private JournalEntry entryToEdit = null; // Stores the full entry object being edited
 
     @Override
     public View onCreateView(
@@ -41,10 +43,30 @@ public class SecondFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Initialises ViewModel - scope it to the Activity to share with FirstFragment
         journalViewModel = new ViewModelProvider(requireActivity()).get(JournalViewModel.class);
 
-        updateDateDisplay();
+        // Retrieves arguments using the generated Args class
+        if (getArguments() != null) {
+            currentEntryId = SecondFragmentArgs.fromBundle(getArguments()).getJournalEntryId();
+        }
+
+        if (currentEntryId != -1L) {
+            entryToEdit = journalViewModel.getEntryById(currentEntryId);
+            if (entryToEdit != null) {
+                populateFieldsForEditing(entryToEdit);
+                // Optionally change button text or screen title
+                binding.buttonSaveEntry.setText(R.string.save_entry);
+            } else {
+                Toast.makeText(getContext(), "Error: Could not load entry for editing.", Toast.LENGTH_LONG).show();
+                NavHostFragment.findNavController(SecondFragment.this).navigateUp();
+                return;
+            }
+        } else {
+            // Adds a new entry, initialises date display to current date
+            selectedDateCalendar = Calendar.getInstance();
+            updateDateDisplay();
+        }
+
         binding.buttonChangeDate.setOnClickListener(v -> showDatePickerDialog());
 
         binding.buttonSaveEntry.setOnClickListener(v -> {
@@ -67,17 +89,34 @@ public class SecondFragment extends Fragment {
             }
 
             if (isValid) {
-                // Creates a new JournalEntry object
-                JournalEntry newEntry = new JournalEntry(title, content, selectedDateCalendar.getTimeInMillis());
+                JournalEntry entryToSave;
+                String successMessage;
 
-                // Adds the new entry using the ViewModel
-                journalViewModel.addJournalEntry(newEntry);
+                // Updates an existing entry
+                if (entryToEdit != null) {
+                    entryToSave = entryToEdit;
+                    entryToSave.setTitle(title);
+                    entryToSave.setContent(content);
+                    entryToSave.setEntryDateMillis(selectedDateCalendar.getTimeInMillis());
+                    successMessage = "Entry '" + title + "' updated!";
+                } else {
+                    entryToSave = new JournalEntry(title, content, selectedDateCalendar.getTimeInMillis());
+                    successMessage = "Entry '" + title + "' saved!";
+                }
 
-                Toast.makeText(getContext(), "Entry '" + title + "' saved!", Toast.LENGTH_SHORT).show();
-
+                journalViewModel.saveJournalEntry(entryToSave); // Uses the unified save method
+                Toast.makeText(getContext(), successMessage, Toast.LENGTH_SHORT).show();
                 NavHostFragment.findNavController(SecondFragment.this).navigateUp();
             }
         });
+    }
+
+    // Helper method to populate fields when editing an entry
+    private void populateFieldsForEditing(JournalEntry entry) {
+        binding.edittextEntryTitle.setText(entry.getTitle());
+        binding.edittextEntryContent.setText(entry.getContent());
+        selectedDateCalendar.setTimeInMillis(entry.getEntryDateMillis());
+        updateDateDisplay();
     }
 
     private void showDatePickerDialog() {
@@ -96,7 +135,7 @@ public class SecondFragment extends Fragment {
     }
 
     private void updateDateDisplay() {
-        SimpleDateFormat sdf = new SimpleDateFormat("EEE, dd MMM yy", Locale.getDefault());
+        SimpleDateFormat sdf = new SimpleDateFormat("EEE, dd MMM yyyy", Locale.getDefault()); // Changed to yyyy
         binding.textviewEntryDate.setText(sdf.format(selectedDateCalendar.getTime()));
     }
 

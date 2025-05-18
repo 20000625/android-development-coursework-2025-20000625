@@ -16,7 +16,7 @@ public class JournalEntry {
 
     // Constructor for new entries
     public JournalEntry(String title, String content, long entryDateMillis) {
-        this.id = ID_GENERATOR.incrementAndGet(); // Assign a unique ID
+        this.id = ID_GENERATOR.incrementAndGet(); // Assigns a unique ID
         this.title = title;
         this.content = content;
         this.entryDateMillis = entryDateMillis;
@@ -37,6 +37,10 @@ public class JournalEntry {
 
     public String getContent() {
         return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
     }
 
     public long getEntryDateMillis() {

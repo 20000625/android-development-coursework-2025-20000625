@@ -9,16 +9,15 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProvider; // Imports ViewModelProvider
+import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.fragment.NavHostFragment; // Needed for navigation
 import androidx.recyclerview.widget.LinearLayoutManager;
 
-import java.util.ArrayList; // For initializing adapter with an empty list
-import java.util.List; // Imports the List
+import java.util.ArrayList;
 
 import uk.ac.hope.mcse.android.coursework.databinding.FragmentFirstBinding;
-import uk.ac.hope.mcse.android.coursework.model.JournalEntry; // Imports the model
-import uk.ac.hope.mcse.android.coursework.ui.JournalEntryAdapter; // Imports the adapter
-import uk.ac.hope.mcse.android.coursework.vm.JournalViewModel; // Imports the ViewModel
+import uk.ac.hope.mcse.android.coursework.ui.JournalEntryAdapter;
+import uk.ac.hope.mcse.android.coursework.vm.JournalViewModel;
 
 public class FirstFragment extends Fragment {
 
@@ -39,23 +38,28 @@ public class FirstFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Initialises ViewModel - scope it to the Activity to share with SecondFragment
+        // Initialises ViewModel (scoped to the Activity)
         journalViewModel = new ViewModelProvider(requireActivity()).get(JournalViewModel.class);
 
-        // Setup RecyclerView
+        // Sets up RecyclerView
         binding.recyclerviewJournalEntries.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        // Initialises Adapter with an empty list initially and set item click listener (TODO later)
-        journalAdapter = new JournalEntryAdapter(new ArrayList<>() /*, entry -> {
-            // TODO: Handle item click: Navigate to SecondFragment with entry data for viewing/editing
+        // Initialises Adapter with an empty list and the item click listener
+        journalAdapter = new JournalEntryAdapter(new ArrayList<>(), entry -> {
+            FirstFragmentDirections.ActionFirstFragmentToSecondFragment action =
+                    FirstFragmentDirections.actionFirstFragmentToSecondFragment();
+            action.setJournalEntryId(entry.getId()); // Passes the ID of the clicked entry
 
-        } */);
+            NavHostFragment.findNavController(FirstFragment.this).navigate(action);
+        });
         binding.recyclerviewJournalEntries.setAdapter(journalAdapter);
 
         // Observes LiveData from ViewModel
         journalViewModel.getAllEntries().observe(getViewLifecycleOwner(), entries -> {
             // Updates the adapter's data
-            journalAdapter.setEntries(entries);
+            if (entries != null) {
+                journalAdapter.setEntries(entries);
+            }
             // Updates visibility of the empty placeholder
             updateEmptyViewVisibility(entries == null || entries.isEmpty());
         });
