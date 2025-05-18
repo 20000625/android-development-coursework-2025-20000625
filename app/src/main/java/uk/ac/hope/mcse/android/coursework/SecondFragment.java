@@ -19,6 +19,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.fragment.NavHostFragment;
@@ -43,7 +44,7 @@ public class SecondFragment extends Fragment {
     private FragmentSecondBinding binding;
     private Calendar selectedDateCalendar = Calendar.getInstance();
     private JournalViewModel journalViewModel;
-    private long currentEntryId = -1L; // Default to -1 for new entry
+    private long currentEntryId = -1L;
     private JournalEntry entryToEdit = null;
 
     private FusedLocationProviderClient fusedLocationClient;
@@ -78,20 +79,19 @@ public class SecondFragment extends Fragment {
                 fetchLocation();
             } else {
                 Toast.makeText(getContext(), R.string.location_permission_denied, Toast.LENGTH_SHORT).show();
-                updateLocationDisplayAndInteractivity(); // Update UI to reflect permission denial
+                updateLocationDisplayAndInteractivity();
             }
         });
 
-        if (currentEntryId != -1L) {
-            // As per new request, hide save button for existing entries.
-            // This makes existing entries effectively read-only unless another mechanism to enable editing is added.
-            binding.buttonSaveEntry.setVisibility(View.GONE);
-            binding.buttonDeleteEntry.setVisibility(View.VISIBLE);
+        setupPrimaryActionButton(); // Calsl new method to set up the action button
 
+        if (currentEntryId != -1L) {
             journalViewModel.getEntryById(currentEntryId).observe(getViewLifecycleOwner(), journalEntry -> {
                 if (journalEntry != null) {
                     entryToEdit = journalEntry;
                     populateFieldsForEditing(entryToEdit);
+                    // Updates action button again in case entryToEdit was null initially
+                    setupPrimaryActionButton();
                 } else {
                     if (currentEntryId != -1L) {
                         Toast.makeText(getContext(), "Entry not found or has been deleted.", Toast.LENGTH_LONG).show();
@@ -100,27 +100,40 @@ public class SecondFragment extends Fragment {
                 }
             });
         } else {
-            binding.buttonSaveEntry.setText(getString(R.string.save_entry));
-            binding.buttonSaveEntry.setVisibility(View.VISIBLE); // Ensures save button is visible for new entries
             binding.edittextEntryTitle.setText("");
             binding.edittextEntryContent.setText("");
             selectedDateCalendar = Calendar.getInstance();
             updateDateDisplay();
-            binding.buttonDeleteEntry.setVisibility(View.GONE);
             entryToEdit = null;
             currentLatitude = null;
             currentLongitude = null;
-            updateLocationDisplayAndInteractivity(); // Sets initial state for location UI
+            updateLocationDisplayAndInteractivity();
+            setupPrimaryActionButton(); // Set up for "Save"
         }
 
         binding.buttonChangeDate.setOnClickListener(v -> showDatePickerDialog());
-        binding.buttonSaveEntry.setOnClickListener(v -> saveOrUpdateEntry());
-        binding.buttonDeleteEntry.setOnClickListener(v -> confirmDeleteEntry());
         binding.buttonAddLocation.setOnClickListener(v -> requestLocationPermissions());
-
-        // Makes the location status TextView clickable to open map
         binding.textviewLocationStatus.setOnClickListener(v -> openLocationInMap());
     }
+
+    private void setupPrimaryActionButton() {
+        if (binding == null) return;
+
+        if (currentEntryId != -1L) { // EDITING/VIEWING MODE
+            binding.buttonActionPrimary.setText(getString(R.string.delete_entry_button_text));
+            binding.buttonActionPrimary.setIcon(ContextCompat.getDrawable(requireContext(), android.R.drawable.ic_menu_delete));
+            // Sets style for delete if different (e.g., outlined error color)
+            binding.buttonActionPrimary.setOnClickListener(v -> confirmDeleteEntry());
+            binding.buttonActionPrimary.setVisibility(View.VISIBLE);
+        } else {
+            binding.buttonActionPrimary.setText(getString(R.string.save_entry));
+            binding.buttonActionPrimary.setIcon(ContextCompat.getDrawable(requireContext(), android.R.drawable.ic_menu_save));
+            // Resets to default style if needed
+            binding.buttonActionPrimary.setOnClickListener(v -> saveOrUpdateEntry());
+            binding.buttonActionPrimary.setVisibility(View.VISIBLE);
+        }
+    }
+
 
     @Override
     public void onResume() {
@@ -129,15 +142,14 @@ public class SecondFragment extends Fragment {
             ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
             if (actionBar != null) {
                 if (currentEntryId != -1L) {
-                    // Title for existing entries is now the "home screen" title
-                    actionBar.setTitle(getString(R.string.first_fragment_label));
+                    actionBar.setTitle(getString(R.string.first_fragment_label)); // Titles for existing entries
                 } else {
                     actionBar.setTitle(getString(R.string.title_new_entry));
                 }
             }
         }
-        // Ensures location UI is correctly displayed when fragment resumes
         updateLocationDisplayAndInteractivity();
+        setupPrimaryActionButton(); // Re-setup button in case fragment is resumed
     }
 
     private void populateFieldsForEditing(JournalEntry entry) {
@@ -145,29 +157,20 @@ public class SecondFragment extends Fragment {
         binding.edittextEntryContent.setText(entry.getContent());
         selectedDateCalendar.setTimeInMillis(entry.getEntryDateMillis());
         updateDateDisplay();
-
         currentLatitude = entry.getLatitude();
         currentLongitude = entry.getLongitude();
-        updateLocationDisplayAndInteractivity(); // Centralised UI update for location
+        updateLocationDisplayAndInteractivity();
     }
 
     private void updateLocationDisplayAndInteractivity() {
-        if (binding == null) return; // Fragment view is not available
+        if (binding == null) return;
 
         if (currentLatitude != null && currentLongitude != null) {
             binding.textviewLocationStatus.setText(String.format(Locale.getDefault(), "Location: %.4f, %.4f (Tap to view)", currentLatitude, currentLongitude));
             binding.textviewLocationStatus.setClickable(true);
-
             binding.buttonAddLocation.setVisibility(View.GONE);
         } else {
-            // Checks if permission was denied to show appropriate message
-            if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-                    ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
-                binding.textviewLocationStatus.setText(getString(R.string.no_location_added));
-            } else {
-                binding.textviewLocationStatus.setText(getString(R.string.no_location_added));
-            }
+            binding.textviewLocationStatus.setText(getString(R.string.no_location_added));
             binding.textviewLocationStatus.setClickable(false);
             binding.buttonAddLocation.setVisibility(View.VISIBLE);
         }
@@ -181,9 +184,7 @@ public class SecondFragment extends Fragment {
             String uriString = String.format(Locale.ENGLISH, "geo:%f,%f?q=%f,%f(%s)",
                     currentLatitude, currentLongitude, currentLatitude, currentLongitude, Uri.encode(label));
             Uri gmmIntentUri = Uri.parse(uriString);
-
             Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
-
             if (mapIntent.resolveActivity(requireActivity().getPackageManager()) != null) {
                 startActivity(mapIntent);
             } else {
@@ -195,6 +196,7 @@ public class SecondFragment extends Fragment {
     }
 
     private void saveOrUpdateEntry() {
+        // This method is now only called for NEW entries if the primary action button is "Save"
         String title = binding.edittextEntryTitle.getText().toString().trim();
         String content = binding.edittextEntryContent.getText().toString().trim();
 
@@ -205,7 +207,6 @@ public class SecondFragment extends Fragment {
         } else {
             binding.textInputLayoutTitle.setError(null);
         }
-
         if (content.isEmpty()) {
             binding.textInputLayoutContent.setError(getString(R.string.error_content_empty));
             isValid = false;
@@ -214,26 +215,11 @@ public class SecondFragment extends Fragment {
         }
 
         if (isValid) {
-            JournalEntry entryToSave;
-            String successMessage;
-
-            if (entryToEdit != null && currentEntryId != -1L) {
-                entryToSave = entryToEdit;
-                entryToSave.setTitle(title);
-                entryToSave.setContent(content);
-                entryToSave.setEntryDateMillis(selectedDateCalendar.getTimeInMillis());
-                entryToSave.setLatitude(currentLatitude);
-                entryToSave.setLongitude(currentLongitude);
-                successMessage = "Entry '" + title + "' updated!";
-            } else {
-                entryToSave = new JournalEntry(title, content, selectedDateCalendar.getTimeInMillis());
-                entryToSave.setLatitude(currentLatitude);
-                entryToSave.setLongitude(currentLongitude);
-                successMessage = "Entry '" + title + "' saved!";
-            }
-
-            journalViewModel.saveJournalEntry(entryToSave);
-            Toast.makeText(getContext(), successMessage, Toast.LENGTH_SHORT).show();
+            JournalEntry newEntry = new JournalEntry(title, content, selectedDateCalendar.getTimeInMillis());
+            newEntry.setLatitude(currentLatitude);
+            newEntry.setLongitude(currentLongitude);
+            journalViewModel.saveJournalEntry(newEntry);
+            Toast.makeText(getContext(), "Entry '" + title + "' saved!", Toast.LENGTH_SHORT).show();
             NavHostFragment.findNavController(SecondFragment.this).navigateUp();
         }
     }
@@ -282,6 +268,9 @@ public class SecondFragment extends Fragment {
     }
 
     private void fetchLocation() {
+        if (binding == null || getContext() == null || !isAdded()) { // More safety checks
+            return;
+        }
         if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             updateLocationDisplayAndInteractivity();
@@ -295,21 +284,23 @@ public class SecondFragment extends Fragment {
             }
             @Override public boolean isCancellationRequested() { return false; }
         }).addOnSuccessListener(requireActivity(), location -> {
+            if (!isAdded() || binding == null) return; // Checks if fragment is still added
             if (location != null) {
                 currentLatitude = location.getLatitude();
                 currentLongitude = location.getLongitude();
                 Toast.makeText(getContext(), R.string.location_captured, Toast.LENGTH_SHORT).show();
             } else {
                 Toast.makeText(getContext(), R.string.could_not_get_location, Toast.LENGTH_LONG).show();
-                currentLatitude = null; // Ensures reset if location fetch fails to return a location
+                currentLatitude = null;
                 currentLongitude = null;
             }
-            updateLocationDisplayAndInteractivity(); // Updates UI after fetch attempt
+            updateLocationDisplayAndInteractivity();
         }).addOnFailureListener(requireActivity(), e -> {
+            if (!isAdded() || binding == null) return; // Checks if fragment is still added
             Toast.makeText(getContext(), getString(R.string.error_getting_location_message, e.getMessage()), Toast.LENGTH_LONG).show();
             currentLatitude = null;
             currentLongitude = null;
-            updateLocationDisplayAndInteractivity(); // Updates UI after failure
+            updateLocationDisplayAndInteractivity();
         });
     }
 
